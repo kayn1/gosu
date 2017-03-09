@@ -43,6 +43,12 @@ namespace Gosu
             if (window == nullptr) {
                 throw_sdl_error("Could not create window");
             }
+            SDL_EventState(SDL_DROPFILE, SDL_ENABLE);
+        #if SDL_VERSION_ATLEAST(2, 0, 5)
+            SDL_EventState(SDL_DROPTEXT, SDL_ENABLE);
+            SDL_EventState(SDL_DROPBEGIN, SDL_ENABLE);
+            SDL_EventState(SDL_DROPCOMPLETE, SDL_ENABLE);
+        #endif
         }
         return window;
     }
@@ -237,13 +243,28 @@ bool Gosu::Window::tick()
     }
     
     SDL_Event e;
+
     while (SDL_PollEvent(&e)) {
-        if (e.type == SDL_QUIT) {
-            SDL_HideWindow(shared_window());
-            return false;
-        }
-        else {
-            input().feed_sdl_event(&e);
+        switch (e.type) {
+            case (SDL_QUIT): {
+                SDL_HideWindow(shared_window());
+                return false;
+            }
+        #if SDL_VERSION_ATLEAST(2, 0, 5)
+            case (SDL_DROPBEGIN):
+            case (SDL_DROPCOMPLETE):
+            case (SDL_DROPTEXT):
+        #endif
+            case (SDL_DROPFILE): {
+                char* dropped_filedir = e.drop.file;
+                drop(dropped_filedir);
+                SDL_free(dropped_filedir);
+                break;
+            }
+            default: {
+                input().feed_sdl_event(&e);
+                break;
+            }
         }
     }
     
