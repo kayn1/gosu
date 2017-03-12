@@ -239,10 +239,7 @@ bool Gosu::Window::tick()
     SDL_Event e;
     while (SDL_PollEvent(&e)) {
         if (e.type == SDL_QUIT) {
-            if (shall_close()) {
-              SDL_HideWindow(shared_window());
-              return false;
-            }
+            close();
         }
         else {
             input().feed_sdl_event(&e);
@@ -268,14 +265,12 @@ bool Gosu::Window::tick()
         SDL_GL_SwapWindow(shared_window());
     }
     
-    return true;
+    return (SDL_GetWindowFlags(shared_window()) & SDL_WINDOW_HIDDEN) == 0;
 }
 
 void Gosu::Window::close()
 {
-    SDL_Event e;
-    e.type = SDL_QUIT;
-    SDL_PushEvent(&e);
+    SDL_HideWindow(shared_window());
 }
 
 void Gosu::Window::button_down(Button button)
